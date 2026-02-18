@@ -4,32 +4,34 @@ declare(strict_types=1);
 $result = null;
 $error = null;
 
+$currencies = ['UAH', 'USD', 'EUR', 'GBP'];
+
+/**
+ * Внутрішні курси відносно UAH
+ */
+$rates = [
+    'UAH' => 1.0,
+    'USD' => 43.5,
+    'EUR' => 50.7,
+    'GBP' => 58.2
+];
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $input = isset($_POST['numbers']) ? trim($_POST['numbers']) : '';
+    $amount = $_POST['amount'] ?? '';
+    $from = $_POST['from'] ?? '';
+    $to = $_POST['to'] ?? '';
 
-    if ($input === '') {
-        $error = "Будь ласка, введіть числа.";
+    if (!is_numeric($amount) || $amount <= 0 || !in_array($from, $currencies) || !in_array($to, $currencies)) {
+        $error = "Будь ласка, введіть коректну суму та валюти.";
     } else {
-        $items = explode(',', $input);
-        $numbers = [];
-        $isValid = true;
+        $amount = (float)$amount;
 
-        foreach ($items as $item) {
-            $item = trim($item);
-            if ($item === '') continue;
-
-            if (is_numeric($item)) {
-                $numbers[] = (float)$item;
-            } else {
-                $isValid = false;
-                break;
-            }
-        }
-
-        if (!$isValid || empty($numbers)) {
-            $error = "Помилка: введіть лише числа, розділені комами.";
+        if ($from === $to) {
+            $result = $amount;
         } else {
-            $result = array_sum($numbers) / count($numbers);
+            // конвертація через UAH
+            $uah = $amount * $rates[$from];
+            $result = $uah / $rates[$to];
         }
     }
 }
@@ -43,26 +45,57 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="../style.css">
 </head>
 <body>
-    <h1>Завдання №3</h1>
-    <div class="form-container">
-        <?php if ($error): ?>
-            <div class="alert alert-error"><?= htmlspecialchars($error) ?></div>
-        <?php endif; ?>
 
-        <?php if ($result !== null): ?>
-            <div class="alert alert-success">
-                Середнє арифметичне: <strong><?= round($result, 4) ?></strong>
-            </div>
-        <?php endif; ?>
+<h1>Завдання №3</h1>
 
-        <form method="POST">
-            <div class="input-group">
-                <label for="numbers">Введіть числа через кому:</label>
-                <input type="text" name="numbers" id="numbers" placeholder="10, 20.5, 30" value="<?= htmlspecialchars($_POST['numbers'] ?? '') ?>" required>
-            </div>
-            <button type="submit" class="submit-btn">Обчислити</button>
-        </form>
-        <a href="../index.php" class="back-link">← Назад до списку</a>
-    </div>
+<div class="form-container">
+
+    <?php if ($error): ?>
+        <div class="alert alert-error"><?= $error ?></div>
+    <?php endif; ?>
+
+    <?php if ($result !== null): ?>
+        <div class="alert alert-success">
+            <?= htmlspecialchars((string)$amount) ?> <?= htmlspecialchars($from) ?> =
+            <strong><?= htmlspecialchars(number_format($result, 2)) ?> <?= htmlspecialchars($to) ?></strong>
+        </div>
+    <?php endif; ?>
+
+    <form method="POST">
+
+        <div class="input-group">
+            <label for="amount">Сума:</label>
+            <input type="number" name="amount" id="amount" step="0.01"
+                   value="<?= $_POST['amount'] ?? '100' ?>" required>
+        </div>
+
+        <div class="input-group">
+            <label for="from">Валюта (з):</label>
+            <select name="from" id="from">
+                <?php foreach ($currencies as $c): ?>
+                    <option value="<?= $c ?>" <?= ($_POST['from'] ?? '') === $c ? 'selected' : '' ?>>
+                        <?= $c ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <label for="to">Валюта (в):</label>
+            <select name="to" id="to">
+                <?php foreach ($currencies as $c): ?>
+                    <option value="<?= $c ?>" <?= ($_POST['to'] ?? '') === $c ? 'selected' : '' ?>>
+                        <?= $c ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+
+        <button type="submit" class="submit-btn">Конвертувати</button>
+    </form>
+
+    <a href="../index.php" class="back-link">← Назад до списку</a>
+
+</div>
 </body>
 </html>
