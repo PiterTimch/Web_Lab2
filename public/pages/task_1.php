@@ -5,21 +5,16 @@ $result = null;
 $error = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $a = filter_input(INPUT_POST, 'a', FILTER_VALIDATE_FLOAT);
-    $b = filter_input(INPUT_POST, 'b', FILTER_VALIDATE_FLOAT);
-    $m = filter_input(INPUT_POST, 'm', FILTER_VALIDATE_FLOAT);
+    $filePath = $_FILES['textfile']['tmp_name'] ?? null;
 
-    if ($a === false || $b === false || $m === false || $a === null || $b === null || $m === null) {
-        $error = "Будь ласка, введіть коректні числові значення.";
-    } elseif ($m <= 0) {
-        $error = "Помилка: Логарифм ln(m) визначений тільки для m > 0.";
+    if (!$filePath || !is_uploaded_file($filePath)) {
+        $error = "Будь ласка, завантажте текстовий файл.";
     } else {
-        $denominator = $b * cos($b);
-        if (abs($denominator) < 1e-9) {
-            $error = "Помилка: Ділення на нуль (знаменник b * cos(b) дорівнює 0).";
+        $content = file_get_contents($filePath);
+        if ($content === false) {
+            $error = "Не вдалося прочитати файл.";
         } else {
-            $numerator = ($m * log($m)) + ($a * sin($a * $m));
-            $result = $numerator / $denominator;
+            $result = strlen($content);
         }
     }
 }
@@ -33,7 +28,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="../style.css">
 </head>
 <body>
-
     <h1>Завдання №1</h1>
 
     <div class="form-container">
@@ -43,28 +37,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <?php if ($result !== null): ?>
             <div class="alert alert-success">
-                Результат: <strong><?= round($result, 4) ?></strong>
+                Кількість символів у файлі: <strong><?= $result ?></strong>
             </div>
         <?php endif; ?>
 
-        <form method="POST">
+        <form method="POST" enctype="multipart/form-data">
             <div class="input-group">
-                <label for="a">Параметр a:</label>
-                <input type="text" name="a" id="a" value="<?= $_POST['a'] ?? '3' ?>" required>
+                <label for="textfile">Завантажте текстовий файл:</label>
+                <input type="file" name="textfile" id="textfile" accept=".txt" required>
             </div>
-            <div class="input-group">
-                <label for="b">Параметр b:</label>
-                <input type="text" name="b" id="b" value="<?= $_POST['b'] ?? '21' ?>" required>
-            </div>
-            <div class="input-group">
-                <label for="m">Параметр m:</label>
-                <input type="text" name="m" id="m" value="<?= $_POST['m'] ?? '3.27' ?>" required>
-            </div>
-            <button type="submit" class="submit-btn">Обчислити</button>
+            <button type="submit" class="submit-btn">Порахувати символи</button>
         </form>
 
         <a href="../index.php" class="back-link">← Назад до списку</a>
     </div>
-
 </body>
 </html>
