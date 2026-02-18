@@ -1,76 +1,78 @@
 <?php
 declare(strict_types=1);
 
-$result_s = null;
-$max_a = null;
-$max_b = null;
+$maxDownloads = 10;
+$counterFile = __DIR__ . '/../downloads/counter.txt';
+
+if (!is_dir(__DIR__ . '/../downloads')) {
+    mkdir(__DIR__ . '/../downloads', 0777, true);
+}
+
+if (!file_exists($counterFile)) {
+    file_put_contents($counterFile, '0');
+}
+
+$counter = (int)file_get_contents($counterFile);
 $error = null;
 
-function getArrayMax(array $arr): float {
-    return (float)max($arr);
-}
-
-function compareMaximus(float $maxA, float $maxB): int {
-    if ($maxA > $maxB) return -1;
-    if ($maxA === $maxB) return 0;
-    return 1;
-}
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $raw_a = $_POST['array_a'] ?? '';
-    $raw_b = $_POST['array_b'] ?? '';
 
-    $data_a = array_filter(array_map('trim', explode(',', $raw_a)), 'is_numeric');
-    $data_b = array_filter(array_map('trim', explode(',', $raw_b)), 'is_numeric');
+    if ($counter >= $maxDownloads) {
+        $error = "Файл досяг ліміту завантажень.";
+    }
+    elseif (!isset($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
+        $error = "Будь ласка, оберіть файл.";
+    }
+    else {
+        $tmpPath = $_FILES['file']['tmp_name'];
+        $originalName = $_FILES['file']['name'];
 
-    if (count($data_a) !== 5 || count($data_b) !== 5) {
-        $error = "Будь ласка, введіть рівно по 5 чисел для кожного масиву.";
-    } else {
-        $max_a = getArrayMax(array_map('floatval', $data_a));
-        $max_b = getArrayMax(array_map('floatval', $data_b));
-        $result_s = compareMaximus($max_a, $max_b);
+        if (!is_uploaded_file($tmpPath)) {
+            $error = "Помилка завантаження файлу.";
+        }
+        else {
+            $counter++;
+            file_put_contents($counterFile, (string)$counter);
+
+            header('Content-Type: application/octet-stream');
+            header('Content-Disposition: attachment; filename="' . basename($originalName) . '"');
+            header('Content-Length: ' . filesize($tmpPath));
+
+            readfile($tmpPath);
+            exit;
+        }
     }
 }
 ?>
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Завдання 5 - Порівняння масивів</title>
-    <link rel="stylesheet" href="../style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Завантаження файлу</title>
+<link rel="stylesheet" href="../style.css">
 </head>
 <body>
 
-    <h1>Завдання №5</h1>
+<div class="form-container">
 
-    <div class="form-container">
-        <?php if ($error): ?>
-            <div class="alert alert-error"><?= $error ?></div>
-        <?php endif; ?>
+<?php if ($error): ?>
+    <div class="alert alert-error"><?= htmlspecialchars($error) ?></div>
+<?php endif; ?>
 
-        <?php if ($result_s !== null): ?>
-            <div class="alert alert-success">
-                Max A: <strong><?= $max_a ?></strong><br>
-                Max B: <strong><?= $max_b ?></strong><br>
-                Значення S: <strong><?= $result_s ?></strong>
-            </div>
-        <?php endif; ?>
-
-        <form method="POST">
-            <div class="input-group">
-                <label for="array_a">Масив A (5 чисел через кому):</label>
-                <input type="text" name="array_a" id="array_a" placeholder="1, 5, 3, 8, 2" value="<?= htmlspecialchars($_POST['array_a'] ?? '') ?>" required>
-            </div>
-            <div class="input-group">
-                <label for="array_b">Масив B (5 чисел через кому):</label>
-                <input type="text" name="array_b" id="array_b" placeholder="4, 2, 9, 1, 7" value="<?= htmlspecialchars($_POST['array_b'] ?? '') ?>" required>
-            </div>
-            <button type="submit" class="submit-btn">Порівняти</button>
-        </form>
-
-        <a href="../index.php" class="back-link">← Назад до списку</a>
+<form method="POST" enctype="multipart/form-data">
+    <div class="input-group">
+        <label>Оберіть файл:</label>
+        <input type="file" name="file" required>
     </div>
 
+    <button type="submit" class="submit-btn">
+        Завантажити (залишилось <?= $maxDownloads - $counter ?>)
+    </button>
+</form>
+
+<a href="../index.php" class="back-link">← Назад до списку</a>
+
+</div>
 </body>
 </html>

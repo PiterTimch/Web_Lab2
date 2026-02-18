@@ -29,7 +29,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($from === $to) {
             $result = $amount;
         } else {
-            // конвертація через UAH
             $uah = $amount * $rates[$from];
             $result = $uah / $rates[$to];
         }
