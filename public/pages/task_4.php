@@ -1,21 +1,40 @@
 <?php
 declare(strict_types=1);
 
-$rows = 2;
-$cols = 20;
-$matrix = [];
-$sum = 0;
-$average = null;
+$result = null;
+$error = null;
+
+$uploadDir = __DIR__ . '/../uploads/';
+
+if (!is_dir($uploadDir)) {
+    mkdir($uploadDir, 0777, true);
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    for ($i = 0; $i < $rows; $i++) {
-        for ($j = 0; $j < $cols; $j++) {
-            $num = rand(1, 100);
-            $matrix[$i][$j] = $num;
-            $sum += $num;
+    $filePath = $_FILES['r1file']['tmp_name'] ?? null;
+    $originalName = $_FILES['r1file']['name'] ?? 'R1.txt';
+
+    if (!$filePath || !is_uploaded_file($filePath)) {
+        $error = "Будь ласка, завантажте файл R1.";
+    } else {
+        $numbers = file($filePath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        $numbers = array_map('floatval', $numbers);
+        $r2 = [];
+
+        for ($i = 0; $i < count($numbers); $i += 10) {
+            $slice = array_slice($numbers, $i, 10);
+            if (!$slice) continue;
+            $r2[] = max($slice);
+            $r2[] = min($slice);
         }
+
+        $r2FileName = pathinfo($originalName, PATHINFO_FILENAME) . '_R2.txt';
+        $r2Path = $uploadDir . $r2FileName;
+
+        file_put_contents($r2Path, implode(PHP_EOL, $r2));
+
+        $result = '../uploads/' . $r2FileName;
     }
-    $average = $sum / ($rows * $cols);
 }
 ?>
 <!DOCTYPE html>
@@ -28,33 +47,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body>
 
-    <h1>Завдання №4 (Масив L 2x20)</h1>
+<h1>Завдання №4</h1>
 
-    <div class="form-container wide">
-        <form method="POST">
-            <button type="submit" class="submit-btn">Згенерувати масив та обчислити</button>
-        </form>
+<div class="form-container">
 
-        <?php if ($average !== null): ?>
-            <div class="matrix-wrapper">
-                <table>
-                    <?php foreach ($matrix as $row): ?>
-                        <tr>
-                            <?php foreach ($row as $val): ?>
-                                <td><?= $val ?></td>
-                            <?php endforeach; ?>
-                        </tr>
-                    <?php endforeach; ?>
-                </table>
-            </div>
+    <?php if ($error): ?>
+        <div class="alert alert-error"><?= $error ?></div>
+    <?php endif; ?>
 
-            <div class="alert alert-success">
-                Середнє арифметичне 40 елементів: <strong><?= round($average, 4) ?></strong>
-            </div>
-        <?php endif; ?>
+    <?php if ($result): ?>
+        <div class="alert alert-success">
+            Файл R2 створено:
+            <a href="<?= htmlspecialchars($result) ?>" download>
+                <strong><?= basename($result) ?></strong>
+            </a>
+        </div>
+    <?php endif; ?>
 
-        <a href="../index.php" class="back-link">← Назад до списку</a>
-    </div>
+    <form method="POST" enctype="multipart/form-data">
+        <div class="input-group">
+            <label for="r1file">Завантажте файл R1:</label>
+            <input type="file" name="r1file" id="r1file" accept=".txt" required>
+        </div>
+        <button type="submit" class="submit-btn">Обробити</button>
+    </form>
 
+    <a href="../index.php" class="back-link">← Назад до списку</a>
+
+</div>
 </body>
 </html>
