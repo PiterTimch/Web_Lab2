@@ -47,32 +47,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Завантаження файлу</title>
-<link rel="stylesheet" href="../style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Завантаження файлу</title>
+    <link rel="stylesheet" href="../style.css">
 </head>
 <body>
 
-<div class="form-container">
+    <div class="form-container">
 
-<?php if ($error): ?>
-    <div class="alert alert-error"><?= htmlspecialchars($error) ?></div>
-<?php endif; ?>
+    <?php if ($error): ?>
+        <div class="alert alert-error"><?= htmlspecialchars($error) ?></div>
+    <?php endif; ?>
 
-<form method="POST" enctype="multipart/form-data">
-    <div class="input-group">
-        <label>Оберіть файл:</label>
-        <input type="file" name="file" required>
+    <form method="POST" enctype="multipart/form-data">
+        <div class="input-group">
+            <label>Оберіть файл:</label>
+            <input type="file" name="file" required>
+        </div>
+
+        <button type="submit" class="submit-btn">
+            Завантажити (залишилось <?= $maxDownloads - $counter ?>)
+        </button>
+    </form>
+
+    <a href="../index.php" class="back-link">← Назад до списку</a>
+
     </div>
-
-    <button type="submit" class="submit-btn">
-        Завантажити (залишилось <?= $maxDownloads - $counter ?>)
-    </button>
-</form>
-
-<a href="../index.php" class="back-link">← Назад до списку</a>
-
-</div>
 </body>
 </html>
