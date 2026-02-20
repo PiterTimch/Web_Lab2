@@ -5,16 +5,23 @@ $result = null;
 $error = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $filePath = $_FILES['textfile']['tmp_name'] ?? null;
+    $file = $_FILES['textfile'] ?? null;
+    $filePath = $file['tmp_name'] ?? null;
+    $fileName = $file['name'] ?? '';
 
     if (!$filePath || !is_uploaded_file($filePath)) {
         $error = "Будь ласка, завантажте текстовий файл.";
     } else {
-        $content = file_get_contents($filePath);
-        if ($content === false) {
-            $error = "Не вдалося прочитати файл.";
+        $extension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+        if ($extension !== 'txt') {
+            $error = "Дозволені лише файли формату .txt";
         } else {
-            $result = strlen($content);
+            $content = file_get_contents($filePath);
+            if ($content === false) {
+                $error = "Не вдалося прочитати файл.";
+            } else {
+                $result = strlen($content);
+            }
         }
     }
 }

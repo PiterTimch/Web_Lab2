@@ -6,9 +6,6 @@ $error = null;
 
 $currencies = ['UAH', 'USD', 'EUR', 'GBP'];
 
-/**
- * Внутрішні курси відносно UAH
- */
 $rates = [
     'UAH' => 1.0,
     'USD' => 43.5,
